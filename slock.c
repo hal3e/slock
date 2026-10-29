@@ -19,6 +19,7 @@
 #include <X11/keysym.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/Xatom.h>
 
 #include "arg.h"
 #include "util.h"
@@ -228,6 +229,7 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 {
 	char curs[] = {0, 0, 0, 0, 0, 0, 0, 0};
 	int i, ptgrab, kbgrab;
+	unsigned long opacity;
 	struct lock *lock;
 	XColor color, dummy;
 	XSetWindowAttributes wa;
@@ -275,6 +277,11 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 
 		/* input is grabbed: we can lock the screen */
 		if (ptgrab == GrabSuccess && kbgrab == GrabSuccess) {
+			opacity = (unsigned long)(alpha * 0xffffffffUL);
+			XChangeProperty(dpy, lock->win,
+			                XInternAtom(dpy, "_NET_WM_WINDOW_OPACITY", False),
+			                XA_CARDINAL, 32, PropModeReplace,
+			                (unsigned char *)&opacity, 1);
 			XMapRaised(dpy, lock->win);
 			if (rr->active)
 				XRRSelectInput(dpy, lock->win, RRScreenChangeNotifyMask);
